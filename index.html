@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f8ff" />
+  <title>데이터 놀이터</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235267e9'/%3E%3Cpath d='M14 46 27 31l9 8 14-21' fill='none' stroke='%23fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='14' cy='46' r='4' fill='%23ff746c'/%3E%3Ccircle cx='27' cy='31' r='4' fill='%23ffd56a'/%3E%3Ccircle cx='36' cy='39' r='4' fill='%2335bfa3'/%3E%3Ccircle cx='50' cy='18' r='4' fill='%23fff'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --ink: #26324b;
+      --muted: #69738a;
+      --blue: #5267e9;
+      --blue-dark: #3e4fc6;
+      --blue-soft: #eef0ff;
+      --mint: #35bfa3;
+      --coral: #ff746c;
+      --paper: #ffffff;
+      --bg: #f6f8ff;
+      --line: #dfe4f1;
+      --shadow: 0 16px 45px rgba(44, 57, 111, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 6% 3%, rgba(255, 210, 113, .26), transparent 24rem),
+        radial-gradient(circle at 96% 14%, rgba(126, 214, 200, .22), transparent 27rem),
+        var(--bg);
+      font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(1440px, 100%);
+      margin: 0 auto;
+      padding: clamp(18px, 3vw, 40px);
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 7px;
+      color: var(--blue);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--coral);
+      box-shadow: 13px 0 0 #ffd56a;
+      margin-right: 13px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 46px);
+      line-height: 1.08;
+      letter-spacing: -.045em;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: clamp(14px, 1.5vw, 17px);
+    }
+
+    .point-count {
+      flex: 0 0 auto;
+      padding: 11px 16px;
+      border: 1px solid #e4e8f5;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .76);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      backdrop-filter: blur(8px);
+    }
+
+    .point-count strong { color: var(--blue); font-size: 18px; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(290px, 360px);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .card {
+      border: 1px solid rgba(218, 224, 241, .9);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .93);
+      box-shadow: var(--shadow);
+    }
+
+    .chart-card { padding: clamp(13px, 2.2vw, 24px); }
+
+    .chart-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 3px 15px;
+    }
+
+    .chart-title { margin: 0; font-size: 18px; letter-spacing: -.02em; }
+
+    .hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .hint::before { content: "●"; color: var(--blue); font-size: 10px; }
+
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1.58 / 1;
+      min-height: 350px;
+      overflow: hidden;
+      border: 1px solid #e8ebf5;
+      border-radius: 18px;
+      background: #fbfcff;
+    }
+
+    #chart {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      transition: opacity .25s ease, transform .25s ease;
+    }
+
+    .empty-state.hidden { opacity: 0; transform: translateY(5px); }
+
+    .empty-inner {
+      max-width: 290px;
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      display: grid;
+      place-items: center;
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 12px;
+      border-radius: 20px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 34px;
+      font-weight: 400;
+      box-shadow: inset 0 0 0 1px rgba(82, 103, 233, .08);
+    }
+
+    .empty-inner strong { display: block; margin-bottom: 5px; color: var(--ink); font-size: 17px; }
+    .empty-inner p { margin: 0; font-size: 14px; line-height: 1.55; }
+
+    .grid-line { stroke: #e8ebf4; stroke-width: 1; }
+    .axis-line { stroke: #8d96aa; stroke-width: 1.5; }
+    .tick-text { fill: #7a8499; font-size: 13px; font-weight: 650; }
+    .axis-label { fill: var(--ink); font-size: 15px; font-weight: 800; }
+
+    .data-line {
+      fill: none;
+      stroke: var(--mint);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 3px 5px rgba(53, 191, 163, .2));
+    }
+
+    .point-hit { fill: transparent; cursor: pointer; }
+    .point-dot {
+      fill: var(--blue);
+      stroke: white;
+      stroke-width: 4;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 6px rgba(62, 79, 198, .28));
+      transition: fill .18s ease, r .18s ease;
+    }
+
+    .point-ring {
+      fill: rgba(82, 103, 233, .11);
+      stroke: var(--blue);
+      stroke-width: 2;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+
+    .point-group.active .point-dot { fill: var(--coral); }
+    .point-group.active .point-ring { opacity: 1; }
+    .point-group.entering { animation: pointIn .42s cubic-bezier(.2, .8, .2, 1); transform-origin: center; }
+
+    @keyframes pointIn {
+      0% { opacity: 0; transform: scale(.25); }
+      70% { transform: scale(1.18); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .controls {
+      position: sticky;
+      top: 20px;
+      padding: 22px;
+    }
+
+    .axis-settings {
+      margin-bottom: 20px;
+      border: 1px solid #e3e7f3;
+      border-radius: 16px;
+      background: #fbfcff;
+      overflow: hidden;
+    }
+
+    .axis-settings summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 850;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .axis-settings summary::-webkit-details-marker { display: none; }
+    .axis-settings summary::after { content: "＋"; color: var(--blue); font-size: 18px; }
+    .axis-settings[open] summary::after { content: "−"; }
+    .axis-settings[open] summary { border-bottom: 1px solid #e8ebf5; }
+    .settings-body { padding: 14px; }
+    .axis-edit + .axis-edit { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #dfe4f1; }
+    .axis-edit-title { margin: 0 0 10px; color: var(--blue-dark); font-size: 13px; font-weight: 900; }
+    .field-grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 9px; }
+    .field-grid.numeric { grid-template-columns: repeat(3, 1fr); margin-top: 9px; }
+    .field label { display: block; margin: 0 0 5px 2px; color: var(--muted); font-size: 12px; font-weight: 750; }
+    .field input {
+      width: 100%;
+      min-width: 0;
+      min-height: 40px;
+      padding: 8px 10px;
+      border: 1px solid #dce1ef;
+      border-radius: 10px;
+      color: var(--ink);
+      background: white;
+    }
+    .field input:focus { outline: 3px solid rgba(82, 103, 233, .16); border-color: var(--blue); }
+    .apply-settings { width: 100%; min-height: 43px; margin-top: 14px; color: white; background: var(--blue); }
+    .settings-error { min-height: 18px; margin: 8px 2px 0; color: #d9514b; font-size: 12px; line-height: 1.45; }
+
+    .mode-banner {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 56px;
+      margin-bottom: 20px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: #f4f6fb;
+      transition: background .2s ease;
+    }
+
+    .mode-banner.active { background: #fff1ef; }
+    .mode-badge {
+      display: grid;
+      place-items: center;
+      width: 31px;
+      height: 31px;
+      border-radius: 10px;
+      background: white;
+      color: var(--blue);
+      font-weight: 900;
+      box-shadow: 0 3px 10px rgba(45, 56, 100, .1);
+    }
+
+    .mode-banner.active .mode-badge { color: var(--coral); }
+    .mode-copy strong { display: block; font-size: 14px; }
+    .mode-copy span { color: var(--muted); font-size: 12px; }
+
+    .slider-block + .slider-block { margin-top: 22px; }
+    .slider-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+    .slider-name { font-weight: 850; font-size: 16px; }
+    .value-pill {
+      min-width: 82px;
+      padding: 7px 10px;
+      border-radius: 11px;
+      background: var(--blue-soft);
+      color: var(--blue-dark);
+      text-align: center;
+      font-size: 17px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      --pct: 50%;
+      width: 100%;
+      height: 34px;
+      margin: 10px 0 2px;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+      touch-action: pan-y;
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(to right, var(--blue) var(--pct), #e2e6f2 var(--pct));
+    }
+
+    input[type="range"]::-moz-range-track { height: 10px; border-radius: 999px; background: #e2e6f2; }
+    input[type="range"]::-moz-range-progress { height: 10px; border-radius: 999px; background: var(--blue); }
+    input[type="range"]::-webkit-slider-thumb {
+      width: 28px;
+      height: 28px;
+      margin-top: -9px;
+      appearance: none;
+      border: 5px solid white;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 2px 8px rgba(48, 60, 126, .3);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border: 5px solid white;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 2px 8px rgba(48, 60, 126, .3);
+    }
+
+    input[type="range"]:focus-visible { outline: 3px solid rgba(82, 103, 233, .25); outline-offset: 3px; border-radius: 10px; }
+    .range-labels { display: flex; justify-content: space-between; color: #8a93a7; font-size: 11px; font-weight: 650; }
+
+    .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 25px; }
+    button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-weight: 850;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease, opacity .16s ease;
+    }
+
+    button:hover:not(:disabled) { transform: translateY(-2px); }
+    button:active:not(:disabled) { transform: translateY(0) scale(.98); }
+    button:focus-visible { outline: 3px solid rgba(82, 103, 233, .3); outline-offset: 2px; }
+    button:disabled { cursor: not-allowed; opacity: .42; }
+    .primary { grid-column: 1 / -1; color: white; background: var(--blue); box-shadow: 0 8px 18px rgba(82, 103, 233, .25); }
+    .primary:hover:not(:disabled) { background: var(--blue-dark); box-shadow: 0 10px 22px rgba(82, 103, 233, .3); }
+    .draw { color: #11846f; background: #e5f8f3; }
+    .draw.on { color: white; background: var(--mint); box-shadow: 0 7px 16px rgba(53, 191, 163, .24); }
+    .delete { color: #d9514b; background: #fff0ef; }
+    .reset { grid-column: 1 / -1; color: #5d6679; background: #f1f3f8; }
+
+    .tip {
+      margin: 17px 2px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+      text-align: center;
+    }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; }
+      .controls { position: static; }
+      .chart-wrap { min-height: 390px; }
+    }
+
+    @media (max-width: 560px) {
+      .app { padding: 16px 12px 26px; }
+      header { align-items: flex-start; }
+      .point-count { padding: 8px 11px; }
+      .subtitle { max-width: 260px; }
+      .card { border-radius: 20px; }
+      .chart-wrap { min-height: 330px; aspect-ratio: 1 / 1; }
+      .chart-toolbar { align-items: flex-start; flex-direction: column; }
+      .controls { padding: 18px; }
+      .hint { font-size: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="eyebrow">보고, 움직이고, 발견해요</p>
+        <h1>데이터 놀이터</h1>
+        <p class="subtitle">두 값을 골라 나만의 차트를 만들어 보세요.</p>
+      </div>
+      <div class="point-count" aria-live="polite">점 <strong id="count">0</strong>개</div>
+    </header>
+
+    <section class="workspace" aria-label="인터랙티브 차트 만들기">
+      <article class="card chart-card">
+        <div class="chart-toolbar">
+          <h2 class="chart-title">나의 데이터 차트</h2>
+          <span class="hint">점을 누르면 값을 바꿀 수 있어요</span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="chart" viewBox="0 0 1000 620" role="img" aria-labelledby="chartTitle chartDesc">
+            <title id="chartTitle">학생이 만든 데이터 차트</title>
+            <desc id="chartDesc">현재 입력된 점이 없습니다.</desc>
+            <g id="gridLayer"></g>
+            <g id="axisLayer"></g>
+            <path id="dataLine" class="data-line" d="" visibility="hidden"></path>
+            <g id="pointLayer"></g>
+          </svg>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-inner">
+              <div class="empty-icon" aria-hidden="true">＋</div>
+              <strong>첫 번째 점을 찍어 볼까요?</strong>
+              <p>오른쪽 슬라이더로 값을 고르고<br><b>점 추가</b>를 눌러 보세요.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="card controls" aria-label="데이터 입력 도구">
+        <div id="modeBanner" class="mode-banner">
+          <div id="modeBadge" class="mode-badge" aria-hidden="true">＋</div>
+          <div class="mode-copy">
+            <strong id="modeTitle">새 점 만들기</strong>
+            <span id="modeHelp">두 값을 정한 뒤 점을 추가하세요.</span>
+          </div>
+        </div>
+
+        <details class="axis-settings">
+          <summary>축 이름과 범위 설정</summary>
+          <div class="settings-body">
+            <section class="axis-edit" aria-labelledby="xAxisEditTitle">
+              <h3 id="xAxisEditTitle" class="axis-edit-title">X축</h3>
+              <div class="field-grid">
+                <div class="field"><label for="xNameInput">이름</label><input id="xNameInput" type="text" maxlength="24" /></div>
+                <div class="field"><label for="xUnitInput">단위</label><input id="xUnitInput" type="text" maxlength="10" /></div>
+              </div>
+              <div class="field-grid numeric">
+                <div class="field"><label for="xMinInput">최솟값</label><input id="xMinInput" type="number" step="any" /></div>
+                <div class="field"><label for="xMaxInput">최댓값</label><input id="xMaxInput" type="number" step="any" /></div>
+                <div class="field"><label for="xStepInput">간격</label><input id="xStepInput" type="number" step="any" min="0" /></div>
+              </div>
+            </section>
+            <section class="axis-edit" aria-labelledby="yAxisEditTitle">
+              <h3 id="yAxisEditTitle" class="axis-edit-title">Y축</h3>
+              <div class="field-grid">
+                <div class="field"><label for="yNameInput">이름</label><input id="yNameInput" type="text" maxlength="24" /></div>
+                <div class="field"><label for="yUnitInput">단위</label><input id="yUnitInput" type="text" maxlength="10" /></div>
+              </div>
+              <div class="field-grid numeric">
+                <div class="field"><label for="yMinInput">최솟값</label><input id="yMinInput" type="number" step="any" /></div>
+                <div class="field"><label for="yMaxInput">최댓값</label><input id="yMaxInput" type="number" step="any" /></div>
+                <div class="field"><label for="yStepInput">간격</label><input id="yStepInput" type="number" step="any" min="0" /></div>
+              </div>
+            </section>
+            <button id="applySettingsButton" class="apply-settings" type="button">축 설정 적용</button>
+            <p id="settingsError" class="settings-error" role="alert"></p>
+          </div>
+        </details>
+
+        <div class="slider-block">
+          <div class="slider-head">
+            <label id="xLabel" class="slider-name" for="xSlider"></label>
+            <output id="xValue" class="value-pill" for="xSlider"></output>
+          </div>
+          <input id="xSlider" type="range" />
+          <div class="range-labels"><span id="xMin"></span><span id="xMax"></span></div>
+        </div>
+
+        <div class="slider-block">
+          <div class="slider-head">
+            <label id="yLabel" class="slider-name" for="ySlider"></label>
+            <output id="yValue" class="value-pill" for="ySlider"></output>
+          </div>
+          <input id="ySlider" type="range" />
+          <div class="range-labels"><span id="yMin"></span><span id="yMax"></span></div>
+        </div>
+
+        <div class="button-grid">
+          <button id="addButton" class="primary" type="button">＋ 점 추가</button>
+          <button id="drawButton" class="draw" type="button" aria-pressed="false">⌁ 그리기</button>
+          <button id="deleteButton" class="delete" type="button" disabled>선택한 점 삭제</button>
+          <button id="resetButton" class="reset" type="button" disabled>↻ 전체 초기화</button>
+        </div>
+        <p class="tip">점이 선택되면 슬라이더를 움직이는 즉시<br>차트의 점도 함께 움직여요.</p>
+        <div id="liveMessage" class="sr-only" aria-live="polite"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    // ============================================================
+    // 차트 설정: 아래 값만 바꾸면 축과 슬라이더가 함께 바뀝니다.
+    // ============================================================
+    const CONFIG = {
+      xAxis: {
+        name: "공부 시간",
+        min: 0,
+        max: 10,
+        unit: "시간",
+        tickInterval: 1
+      },
+      yAxis: {
+        name: "퀴즈 점수",
+        min: 0,
+        max: 100,
+        unit: "점",
+        tickInterval: 10
+      }
+    };
+
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const CHART = { left: 92, right: 36, top: 34, bottom: 78, width: 872, height: 508 };
+    const state = {
+      points: [],
+      selectedId: null,
+      lineVisible: false,
+      nextId: 1,
+      animationFrame: null
+    };
+
+    const el = {
+      chart: document.getElementById("chart"),
+      chartDesc: document.getElementById("chartDesc"),
+      grid: document.getElementById("gridLayer"),
+      axes: document.getElementById("axisLayer"),
+      line: document.getElementById("dataLine"),
+      points: document.getElementById("pointLayer"),
+      empty: document.getElementById("emptyState"),
+      count: document.getElementById("count"),
+      xSlider: document.getElementById("xSlider"),
+      ySlider: document.getElementById("ySlider"),
+      xValue: document.getElementById("xValue"),
+      yValue: document.getElementById("yValue"),
+      add: document.getElementById("addButton"),
+      draw: document.getElementById("drawButton"),
+      delete: document.getElementById("deleteButton"),
+      reset: document.getElementById("resetButton"),
+      modeBanner: document.getElementById("modeBanner"),
+      modeBadge: document.getElementById("modeBadge"),
+      modeTitle: document.getElementById("modeTitle"),
+      modeHelp: document.getElementById("modeHelp"),
+      live: document.getElementById("liveMessage"),
+      xNameInput: document.getElementById("xNameInput"),
+      xUnitInput: document.getElementById("xUnitInput"),
+      xMinInput: document.getElementById("xMinInput"),
+      xMaxInput: document.getElementById("xMaxInput"),
+      xStepInput: document.getElementById("xStepInput"),
+      yNameInput: document.getElementById("yNameInput"),
+      yUnitInput: document.getElementById("yUnitInput"),
+      yMinInput: document.getElementById("yMinInput"),
+      yMaxInput: document.getElementById("yMaxInput"),
+      yStepInput: document.getElementById("yStepInput"),
+      applySettings: document.getElementById("applySettingsButton"),
+      settingsError: document.getElementById("settingsError")
+    };
+
+    function svgElement(tag, attributes = {}) {
+      const node = document.createElementNS(SVG_NS, tag);
+      Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+      return node;
+    }
+
+    function decimals(value) {
+      const text = String(value);
+      return text.includes(".") ? text.split(".")[1].length : 0;
+    }
+
+    function roundToStep(value, step) {
+      return Number(Number(value).toFixed(Math.max(decimals(step), 0)));
+    }
+
+    function formatNumber(value, interval) {
+      return Number(value).toLocaleString("ko-KR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: Math.max(decimals(interval), 2)
+      });
+    }
+
+    function formatValue(value, axis) {
+      return `${formatNumber(value, axis.tickInterval)}${axis.unit}`;
+    }
+
+    function axisTitle(axis) {
+      return axis.unit ? `${axis.name} (${axis.unit})` : axis.name;
+    }
+
+    function scaleX(value) {
+      return CHART.left + ((value - CONFIG.xAxis.min) / (CONFIG.xAxis.max - CONFIG.xAxis.min)) * CHART.width;
+    }
+
+    function scaleY(value) {
+      return CHART.top + CHART.height - ((value - CONFIG.yAxis.min) / (CONFIG.yAxis.max - CONFIG.yAxis.min)) * CHART.height;
+    }
+
+    function makeTicks(axis) {
+      const result = [];
+      const precision = Math.max(decimals(axis.tickInterval), decimals(axis.min), decimals(axis.max));
+      for (let value = axis.min, guard = 0; value <= axis.max + axis.tickInterval * 0.0001 && guard < 500; value += axis.tickInterval, guard += 1) {
+        result.push(Number(value.toFixed(precision)));
+      }
+      if (result[result.length - 1] !== axis.max) result.push(axis.max);
+      return result;
+    }
+
+    function drawAxes() {
+      el.grid.replaceChildren();
+      el.axes.replaceChildren();
+
+      makeTicks(CONFIG.xAxis).forEach((value) => {
+        const x = scaleX(value);
+        el.grid.append(svgElement("line", { class: "grid-line", x1: x, y1: CHART.top, x2: x, y2: CHART.top + CHART.height }));
+        const text = svgElement("text", { class: "tick-text", x, y: CHART.top + CHART.height + 27, "text-anchor": "middle" });
+        text.textContent = formatNumber(value, CONFIG.xAxis.tickInterval);
+        el.axes.append(text);
+      });
+
+      makeTicks(CONFIG.yAxis).forEach((value) => {
+        const y = scaleY(value);
+        el.grid.append(svgElement("line", { class: "grid-line", x1: CHART.left, y1: y, x2: CHART.left + CHART.width, y2: y }));
+        const text = svgElement("text", { class: "tick-text", x: CHART.left - 16, y: y + 5, "text-anchor": "end" });
+        text.textContent = formatNumber(value, CONFIG.yAxis.tickInterval);
+        el.axes.append(text);
+      });
+
+      el.axes.append(svgElement("line", { class: "axis-line", x1: CHART.left, y1: CHART.top + CHART.height, x2: CHART.left + CHART.width, y2: CHART.top + CHART.height }));
+      el.axes.append(svgElement("line", { class: "axis-line", x1: CHART.left, y1: CHART.top, x2: CHART.left, y2: CHART.top + CHART.height }));
+
+      const xTitle = svgElement("text", { class: "axis-label", x: CHART.left + CHART.width / 2, y: 606, "text-anchor": "middle" });
+      xTitle.textContent = axisTitle(CONFIG.xAxis);
+      el.axes.append(xTitle);
+
+      const yTitle = svgElement("text", { class: "axis-label", x: 24, y: CHART.top + CHART.height / 2, "text-anchor": "middle", transform: `rotate(-90 24 ${CHART.top + CHART.height / 2})` });
+      yTitle.textContent = axisTitle(CONFIG.yAxis);
+      el.axes.append(yTitle);
+    }
+
+    function setupSlider(slider, axis, labelId, valueEl, minId, maxId) {
+      slider.min = axis.min;
+      slider.max = axis.max;
+      slider.step = axis.tickInterval;
+      slider.value = axis.min;
+      document.getElementById(labelId).textContent = axis.name;
+      document.getElementById(minId).textContent = formatValue(axis.min, axis);
+      document.getElementById(maxId).textContent = formatValue(axis.max, axis);
+      valueEl.textContent = formatValue(axis.min, axis);
+      slider.setAttribute("aria-label", `${axis.name} (${axis.unit})`);
+      updateSliderFill(slider);
+    }
+
+    function populateSettings() {
+      const values = {
+        xNameInput: CONFIG.xAxis.name,
+        xUnitInput: CONFIG.xAxis.unit,
+        xMinInput: CONFIG.xAxis.min,
+        xMaxInput: CONFIG.xAxis.max,
+        xStepInput: CONFIG.xAxis.tickInterval,
+        yNameInput: CONFIG.yAxis.name,
+        yUnitInput: CONFIG.yAxis.unit,
+        yMinInput: CONFIG.yAxis.min,
+        yMaxInput: CONFIG.yAxis.max,
+        yStepInput: CONFIG.yAxis.tickInterval
+      };
+      Object.entries(values).forEach(([key, value]) => { el[key].value = value; });
+    }
+
+    function readAxis(prefix) {
+      return {
+        name: el[`${prefix}NameInput`].value.trim(),
+        unit: el[`${prefix}UnitInput`].value.trim(),
+        min: Number(el[`${prefix}MinInput`].value),
+        max: Number(el[`${prefix}MaxInput`].value),
+        tickInterval: Number(el[`${prefix}StepInput`].value)
+      };
+    }
+
+    function validateAxis(axis, label) {
+      if (!axis.name) return `${label} 이름을 입력해 주세요.`;
+      if (![axis.min, axis.max, axis.tickInterval].every(Number.isFinite)) return `${label} 범위와 간격을 숫자로 입력해 주세요.`;
+      if (axis.min >= axis.max) return `${label} 최댓값은 최솟값보다 커야 해요.`;
+      if (axis.tickInterval <= 0) return `${label} 눈금 간격은 0보다 커야 해요.`;
+      if ((axis.max - axis.min) / axis.tickInterval > 40) return `${label} 눈금은 40개 이하가 되도록 간격을 늘려 주세요.`;
+      return "";
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function applyAxisSettings() {
+      const nextX = readAxis("x");
+      const nextY = readAxis("y");
+      const error = validateAxis(nextX, "X축") || validateAxis(nextY, "Y축");
+      el.settingsError.textContent = error;
+      if (error) return;
+
+      Object.assign(CONFIG.xAxis, nextX);
+      Object.assign(CONFIG.yAxis, nextY);
+      state.points.forEach((point) => {
+        point.x = roundToStep(clamp(point.x, nextX.min, nextX.max), nextX.tickInterval);
+        point.y = roundToStep(clamp(point.y, nextY.min, nextY.max), nextY.tickInterval);
+        point.displayX = point.x;
+        point.displayY = point.y;
+      });
+
+      setupSlider(el.xSlider, CONFIG.xAxis, "xLabel", el.xValue, "xMin", "xMax");
+      setupSlider(el.ySlider, CONFIG.yAxis, "yLabel", el.yValue, "yMin", "yMax");
+      const point = selectedPoint();
+      if (point) setSliderValues(point.x, point.y);
+      drawAxes();
+      renderPointElements();
+      renderLine();
+      updateInterface();
+      announce(`축 설정을 적용했습니다. X축은 ${CONFIG.xAxis.name}, Y축은 ${CONFIG.yAxis.name}입니다.`);
+    }
+
+    function updateSliderFill(slider) {
+      const ratio = (Number(slider.value) - Number(slider.min)) / (Number(slider.max) - Number(slider.min));
+      slider.style.setProperty("--pct", `${ratio * 100}%`);
+    }
+
+    function readSliderValues() {
+      return {
+        x: roundToStep(Number(el.xSlider.value), CONFIG.xAxis.tickInterval),
+        y: roundToStep(Number(el.ySlider.value), CONFIG.yAxis.tickInterval)
+      };
+    }
+
+    function setSliderValues(x, y) {
+      el.xSlider.value = x;
+      el.ySlider.value = y;
+      updateValueDisplays();
+    }
+
+    function updateValueDisplays() {
+      const { x, y } = readSliderValues();
+      el.xValue.textContent = formatValue(x, CONFIG.xAxis);
+      el.yValue.textContent = formatValue(y, CONFIG.yAxis);
+      updateSliderFill(el.xSlider);
+      updateSliderFill(el.ySlider);
+    }
+
+    function announce(message) {
+      el.live.textContent = "";
+      window.setTimeout(() => { el.live.textContent = message; }, 20);
+    }
+
+    function selectedPoint() {
+      return state.points.find((point) => point.id === state.selectedId) || null;
+    }
+
+    function addPoint() {
+      const { x, y } = readSliderValues();
+      const point = { id: state.nextId++, x, y, displayX: x, displayY: y, entering: true };
+      state.points.push(point);
+      state.selectedId = point.id;
+      renderPointElements();
+      updateInterface();
+      animateLineDrawing();
+      announce(`${CONFIG.xAxis.name} ${formatValue(x, CONFIG.xAxis)}, ${CONFIG.yAxis.name} ${formatValue(y, CONFIG.yAxis)} 점을 추가했습니다.`);
+      window.setTimeout(() => {
+        point.entering = false;
+        const group = document.querySelector(`[data-point-id="${point.id}"]`);
+        if (group) group.classList.remove("entering");
+      }, 450);
+    }
+
+    function selectPoint(id) {
+      const point = state.points.find((item) => item.id === id);
+      if (!point) return;
+      state.selectedId = id;
+      setSliderValues(point.x, point.y);
+      renderPointElements();
+      updateInterface();
+      announce(`${formatValue(point.x, CONFIG.xAxis)}, ${formatValue(point.y, CONFIG.yAxis)} 점을 선택했습니다.`);
+    }
+
+    function deleteSelected() {
+      const point = selectedPoint();
+      if (!point) return;
+      state.points = state.points.filter((item) => item.id !== point.id);
+      state.selectedId = null;
+      renderPointElements();
+      updateInterface();
+      renderLine();
+      announce("선택한 점을 삭제했습니다.");
+    }
+
+    function resetAll() {
+      if (!state.points.length) return;
+      state.points = [];
+      state.selectedId = null;
+      state.lineVisible = false;
+      state.nextId = 1;
+      setSliderValues(CONFIG.xAxis.min, CONFIG.yAxis.min);
+      renderPointElements();
+      updateInterface();
+      renderLine();
+      announce("모든 점과 선을 지웠습니다.");
+    }
+
+    function toggleLine() {
+      if (state.points.length < 2) {
+        announce("선을 그리려면 점을 두 개 이상 추가해 주세요.");
+        return;
+      }
+      state.lineVisible = !state.lineVisible;
+      updateInterface();
+      renderLine();
+      if (state.lineVisible) animateLineDrawing();
+      announce(state.lineVisible ? "점을 선으로 이었습니다." : "연결선을 숨겼습니다.");
+    }
+
+    function changeSelectedPoint() {
+      updateValueDisplays();
+      const point = selectedPoint();
+      if (!point) return;
+      const values = readSliderValues();
+      point.x = values.x;
+      point.y = values.y;
+      startMotion();
+    }
+
+    function renderPointElements() {
+      const existing = new Map([...el.points.children].map((node) => [Number(node.dataset.pointId), node]));
+
+      state.points.forEach((point) => {
+        let group = existing.get(point.id);
+        if (!group) {
+          group = svgElement("g", { class: "point-group", "data-point-id": point.id, role: "button", tabindex: "0" });
+          const ring = svgElement("circle", { class: "point-ring", r: 19 });
+          const dot = svgElement("circle", { class: "point-dot", r: 10 });
+          const hit = svgElement("circle", { class: "point-hit", r: 25 });
+          group.append(ring, dot, hit);
+          group.addEventListener("click", (event) => { event.stopPropagation(); selectPoint(point.id); });
+          group.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              selectPoint(point.id);
+            }
+          });
+          el.points.append(group);
+        }
+        existing.delete(point.id);
+        group.classList.toggle("active", point.id === state.selectedId);
+        group.classList.toggle("entering", Boolean(point.entering));
+        group.setAttribute("aria-label", `${CONFIG.xAxis.name} ${formatValue(point.x, CONFIG.xAxis)}, ${CONFIG.yAxis.name} ${formatValue(point.y, CONFIG.yAxis)} 점`);
+        positionPointGroup(group, point.displayX, point.displayY);
+      });
+
+      existing.forEach((node) => node.remove());
+    }
+
+    function positionPointGroup(group, x, y) {
+      group.setAttribute("transform", `translate(${scaleX(x)} ${scaleY(y)})`);
+    }
+
+    function sortedDisplayPoints() {
+      return [...state.points].sort((a, b) => a.displayX - b.displayX || a.id - b.id);
+    }
+
+    function linePath() {
+      return sortedDisplayPoints().map((point, index) => `${index === 0 ? "M" : "L"} ${scaleX(point.displayX)} ${scaleY(point.displayY)}`).join(" ");
+    }
+
+    function renderLine() {
+      const show = state.lineVisible && state.points.length >= 2;
+      el.line.setAttribute("visibility", show ? "visible" : "hidden");
+      el.line.setAttribute("d", show ? linePath() : "");
+    }
+
+    function animateLineDrawing() {
+      if (!state.lineVisible || state.points.length < 2) return;
+      renderLine();
+      const length = el.line.getTotalLength();
+      el.line.style.transition = "none";
+      el.line.style.strokeDasharray = `${length}`;
+      el.line.style.strokeDashoffset = `${length}`;
+      el.line.getBoundingClientRect();
+      el.line.style.transition = "stroke-dashoffset .6s cubic-bezier(.2,.75,.25,1)";
+      el.line.style.strokeDashoffset = "0";
+      window.setTimeout(() => {
+        el.line.style.transition = "";
+        el.line.style.strokeDasharray = "";
+        el.line.style.strokeDashoffset = "";
+      }, 650);
+    }
+
+    function startMotion() {
+      if (state.animationFrame) return;
+      const step = () => {
+        let moving = false;
+        state.points.forEach((point) => {
+          const dx = point.x - point.displayX;
+          const dy = point.y - point.displayY;
+          if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
+            point.displayX += dx * 0.28;
+            point.displayY += dy * 0.28;
+            moving = true;
+          } else {
+            point.displayX = point.x;
+            point.displayY = point.y;
+          }
+          const group = el.points.querySelector(`[data-point-id="${point.id}"]`);
+          if (group) {
+            positionPointGroup(group, point.displayX, point.displayY);
+            group.setAttribute("aria-label", `${CONFIG.xAxis.name} ${formatValue(point.x, CONFIG.xAxis)}, ${CONFIG.yAxis.name} ${formatValue(point.y, CONFIG.yAxis)} 점`);
+          }
+        });
+        renderLine();
+        if (moving) {
+          state.animationFrame = requestAnimationFrame(step);
+        } else {
+          state.animationFrame = null;
+        }
+      };
+      state.animationFrame = requestAnimationFrame(step);
+    }
+
+    function updateInterface() {
+      const point = selectedPoint();
+      const count = state.points.length;
+      el.count.textContent = count;
+      el.empty.classList.toggle("hidden", count > 0);
+      el.delete.disabled = !point;
+      el.reset.disabled = count === 0;
+      el.draw.disabled = count < 2;
+      el.draw.classList.toggle("on", state.lineVisible);
+      el.draw.setAttribute("aria-pressed", String(state.lineVisible));
+      el.draw.textContent = state.lineVisible ? "⌁ 선 숨기기" : "⌁ 그리기";
+      el.add.textContent = point ? "＋ 새 점으로 추가" : "＋ 점 추가";
+      el.modeBanner.classList.toggle("active", Boolean(point));
+      el.modeBadge.textContent = point ? "●" : "＋";
+      el.modeTitle.textContent = point ? `점 ${state.points.findIndex((item) => item.id === point.id) + 1} 수정하기` : "새 점 만들기";
+      el.modeHelp.textContent = point ? "슬라이더를 움직여 위치를 바꾸세요." : "두 값을 정한 뒤 점을 추가하세요.";
+      el.chartDesc.textContent = count
+        ? `${count}개의 점이 있습니다.${state.lineVisible ? " 점들이 선으로 연결되어 있습니다." : ""}`
+        : "현재 입력된 점이 없습니다.";
+    }
+
+    function registerWebMcpTools() {
+      const context = document.modelContext;
+      if (!context?.registerTool) return;
+      const annotations = { readOnlyHint: false, untrustedContentHint: false };
+
+      Promise.resolve(context.registerTool({
+        name: "configure_chart_axes",
+        title: "차트 축 설정",
+        description: "X축과 Y축의 이름, 단위, 범위, 눈금 간격을 바꾸고 화면에 적용합니다.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            xAxis: { type: "object", properties: { name: { type: "string" }, unit: { type: "string" }, min: { type: "number" }, max: { type: "number" }, tickInterval: { type: "number" } }, required: ["name", "unit", "min", "max", "tickInterval"], additionalProperties: false },
+            yAxis: { type: "object", properties: { name: { type: "string" }, unit: { type: "string" }, min: { type: "number" }, max: { type: "number" }, tickInterval: { type: "number" } }, required: ["name", "unit", "min", "max", "tickInterval"], additionalProperties: false }
+          },
+          required: ["xAxis", "yAxis"],
+          additionalProperties: false
+        },
+        annotations,
+        execute(input) {
+          const xError = validateAxis(input?.xAxis || {}, "X축");
+          const yError = validateAxis(input?.yAxis || {}, "Y축");
+          if (xError || yError) throw new Error(xError || yError);
+          ["Name", "Unit", "Min", "Max", "Step"].forEach((part) => {
+            const key = part === "Step" ? "tickInterval" : part.toLowerCase();
+            el[`x${part}Input`].value = input.xAxis[key];
+            el[`y${part}Input`].value = input.yAxis[key];
+          });
+          applyAxisSettings();
+          return { xAxis: { ...CONFIG.xAxis }, yAxis: { ...CONFIG.yAxis } };
+        }
+      })).catch(() => {});
+
+      Promise.resolve(context.registerTool({
+        name: "add_chart_points",
+        title: "차트 점 추가",
+        description: "현재 축 범위 안의 좌표를 한 번에 추가하고 화면의 그래프를 갱신합니다.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            points: { type: "array", minItems: 1, maxItems: 100, items: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } }, required: ["x", "y"], additionalProperties: false } }
+          },
+          required: ["points"],
+          additionalProperties: false
+        },
+        annotations,
+        execute(input) {
+          if (!Array.isArray(input?.points) || !input.points.length) throw new Error("추가할 점이 필요합니다.");
+          input.points.forEach(({ x, y }) => {
+            if (!Number.isFinite(x) || !Number.isFinite(y) || x < CONFIG.xAxis.min || x > CONFIG.xAxis.max || y < CONFIG.yAxis.min || y > CONFIG.yAxis.max) {
+              throw new Error("모든 점은 현재 X축과 Y축 범위 안에 있어야 합니다.");
+            }
+          });
+          input.points.forEach(({ x, y }) => state.points.push({ id: state.nextId++, x, y, displayX: x, displayY: y, entering: false }));
+          renderPointElements();
+          renderLine();
+          updateInterface();
+          return { added: input.points.length, total: state.points.length };
+        }
+      })).catch(() => {});
+    }
+
+    el.xSlider.addEventListener("input", changeSelectedPoint);
+    el.ySlider.addEventListener("input", changeSelectedPoint);
+    el.add.addEventListener("click", addPoint);
+    el.delete.addEventListener("click", deleteSelected);
+    el.reset.addEventListener("click", resetAll);
+    el.draw.addEventListener("click", toggleLine);
+    el.applySettings.addEventListener("click", applyAxisSettings);
+    el.chart.addEventListener("click", (event) => {
+      if (event.target === el.chart || event.target.closest("#gridLayer") || event.target.closest("#axisLayer")) {
+        state.selectedId = null;
+        renderPointElements();
+        updateInterface();
+      }
+    });
+
+    setupSlider(el.xSlider, CONFIG.xAxis, "xLabel", el.xValue, "xMin", "xMax");
+    setupSlider(el.ySlider, CONFIG.yAxis, "yLabel", el.yValue, "yMin", "yMax");
+    populateSettings();
+    drawAxes();
+    updateInterface();
+    registerWebMcpTools();
+  </script>
+</body>
+</html>
